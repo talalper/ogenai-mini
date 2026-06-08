@@ -1,0 +1,20 @@
+{
+ "name": "ogenai-mini-mvp",
+ "version": "1.0.0",
+ "description": "AI Powered Mini MVP for extracting Hebrew tasks from free text using OpenAI API.",
+ "type": "module",
+ "scripts": {
+   "dev": "netlify dev",
+   "start": "netlify dev",
+   "build": "echo \"Static app - no build step required\""
+ },
+ "dependencies": {
+   "openai": "latest"
+ },
+ "devDependencies": {
+   "netlify-cli": "latest"
+ },
+ "engines": {
+   "node": ">=18"
+ }
+}

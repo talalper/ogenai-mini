@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>OgenAI Mini MVP</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <main class="app-shell">
+   <header class="hero">
+     <div class="brand-row">
+       <div class="logo">⚓</div>
+       <div>
+         <p class="eyebrow">AI Powered Mini MVP</p>
+         <h1>OgenAI</h1>
+       </div>
+     </div>
+     <p class="subtitle">
+       פרקי את כל מה שיש לך בראש. ה־AI יהפוך את זה למשימות ברורות שאפשר לערוך ולאשר.
+     </p>
+   </header>
+
+   <section class="panel input-panel" aria-labelledby="brainDumpTitle">
+     <div class="section-title-row">
+       <div>
+         <p class="eyebrow">מה על הפרק?</p>
+         <h2 id="brainDumpTitle">פריקת עומס חכמה</h2>
+       </div>
+       <span class="pill">עברית • AI • משימות</span>
+     </div>
+
+     <label for="brainDumpInput" class="field-label">כתבי או הכתיבי מחשבות, סידורים ומשימות</label>
+     <textarea
+       id="brainDumpInput"
+       maxlength="1200"
+       rows="7"
+       placeholder="לדוגמה: לקחת את הילדים לגן, לקנות חלב, לשלוח מייל למנהלת, לקבוע תור לרופא ולכבס בערב..."
+     ></textarea>
+
+     <div class="input-footer">
+       <span id="charCounter">0/1200</span>
+       <button id="analyzeBtn" class="primary-btn" type="button">
+         צור לי משימות
+       </button>
+     </div>
+
+     <div id="statusBox" class="status-box hidden" role="status"></div>
+   </section>
+
+   <section id="draftSection" class="panel hidden" aria-labelledby="draftTitle">
+     <div class="section-title-row">
+       <div>
+         <p class="eyebrow">טיוטות AI</p>
+         <h2 id="draftTitle">משימות מוצעות לאישור</h2>
+       </div>
+       <button id="clearDraftsBtn" class="ghost-btn" type="button">נקה טיוטות</button>
+     </div>
+
+     <p class="helper-text">
+       ה־AI מציע בלבד. אפשר לערוך כל שדה, למחוק משימות לא רלוונטיות, ולאשר רק מה שמתאים.
+     </p>
+
+     <div id="draftList" class="cards-list"></div>
+
+     <button id="approveSelectedBtn" class="primary-btn wide-btn" type="button">
+       אשרי ושמרי משימות מסומנות
+     </button>
+   </section>
+
+   <section class="panel" aria-labelledby="savedTitle">
+     <div class="section-title-row">
+       <div>
+         <p class="eyebrow">המשימות שלי</p>
+         <h2 id="savedTitle">משימות מאושרות</h2>
+       </div>
+       <button id="clearAllTasksBtn" class="ghost-btn danger" type="button">איפוס דמו</button>
+     </div>
+
+     <div class="tabs" role="tablist" aria-label="סינון משימות">
+       <button id="todayTab" class="tab active" type="button" data-tab="today">משימות להיום</button>
+       <button id="futureTab" class="tab" type="button" data-tab="future">משימות עתידיות</button>
+     </div>
+
+     <div id="taskSummary" class="summary-line"></div>
+     <div id="taskList" class="cards-list empty-space"></div>
+   </section>
+
+   <footer class="footer-note">
+     <strong>שקיפות:</strong> ה־AI מסייע בארגון ותכנון בלבד. המשימות נשמרות בדפדפן המקומי שלכן, ולא נשלחות למסד נתונים.
+   </footer>
+ </main>
+
+ <script type="module" src="app.js"></script>
+</body>
+</html>
