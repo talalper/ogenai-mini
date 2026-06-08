@@ -77,6 +77,13 @@ function normalizeTask(task) {
 }
 
 export function buildLocalFallbackTasks(text, existingTasks = []) {
+const ACTION_WORDS = [
+  "לקנות", "להתקשר", "לשלוח", "לקחת", "להחזיר", "לאסוף", "לקבוע",
+  "לתאם", "לבדוק", "לשלם", "להכין", "לבשל", "לנקות", "לסדר",
+  "לכבס", "להביא", "להוציא", "להזמין", "לכתוב", "לקרוא", "להגיש",
+  "לעדכן", "צריך", "צריכה", "חייבת", "לא לשכוח", "תור", "קניות",
+  "מייל", "גן", "בית ספר"
+];
  const segments = splitIntoSegments(text);
  const tasks = [];
 
@@ -112,50 +119,28 @@ export function buildLocalFallbackTasks(text, existingTasks = []) {
 }
 
 function splitIntoSegments(text) {
- return String(text || "")
-   .replace(/\r/g, "\n")
-   .split(/[\n.;!?]+|(?:,\s*)|(?:\s+-\s+)/)
-   .map((item) => cleanText(item))
-   .filter((item) => item.length > 1);
+  let processedText = String(text || "").replace(/\r/g, "\n");
+
+  // יצירת תבנית חיפוש מכל מילות הפעולה יחד
+  const actionWordsPattern = ACTION_WORDS.join('|');
+
+  // מחפש "ו" שמחוברת לפועל (כמו "ולקבוע", "ולהוציא") עם תמיכה בעברית
+  const regexVav = new RegExp(`(^|\\s)(ו)(${actionWordsPattern})(?=\\s|$)`, 'g');
+  processedText = processedText.replace(regexVav, '$1. $3');
+
+  // מחפש "וגם" או "אז" לפני פועל
+  const regexWords = new RegExp(`(^|\\s)(וגם|אז)\\s+(${actionWordsPattern})(?=\\s|$)`, 'g');
+  processedText = processedText.replace(regexWords, '$1. $3');
+
+  return processedText
+    .split(/[\n.;!?]+|(?:,\s*)|(?:\s+-\s+)/)
+    .map((item) => cleanText(item))
+    .filter((item) => item.length > 1);
 }
 
 function looksLikeTask(segment) {
- const actionWords = [
-   "לקנות",
-   "להתקשר",
-   "לשלוח",
-   "לקחת",
-   "להחזיר",
-   "לאסוף",
-   "לקבוע",
-   "לתאם",
-   "לבדוק",
-   "לשלם",
-   "להכין",
-   "לבשל",
-   "לנקות",
-   "לסדר",
-   "לכבס",
-   "להביא",
-   "להוציא",
-   "להזמין",
-   "לכתוב",
-   "לקרוא",
-   "להגיש",
-   "לעדכן",
-   "צריך",
-   "צריכה",
-   "חייבת",
-   "לא לשכוח",
-   "תור",
-   "קניות",
-   "מייל",
-   "גן",
-   "בית ספר"
- ];
-
- const lower = segment.toLowerCase();
- return actionWords.some((word) => lower.includes(word));
+  const lower = segment.toLowerCase();
+  return ACTION_WORDS.some((word) => lower.includes(word));
 }
 
 function createTaskTitle(segment) {
@@ -189,9 +174,38 @@ function detectUrgency(segment) {
 }
 
 function detectTime(segment) {
- const match = segment.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
- if (!match) return "";
- return `${match[1].padStart(2, "0")}:${match[2]}`;
+  // 1. תבנית קיימת לשעות מדויקות (למשל 16:00)
+  const exactMatch = segment.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  if (exactMatch) return `${exactMatch[1].padStart(2, "0")}:${exactMatch[2]}`;
+
+  // 2. זיהוי שעות במלל חופשי ("בשעה 4", "ב 4", "ב-4")
+  const textTimeMatch = segment.match(/(?:^|\s)(בשעה|ב|ב-|לשעה)\s*([0-9]{1,2}|אחת|שתיים|שלוש|ארבע|חמש|שש|שבע|שמונה|תשע|עשר|אחת עשרה|שתים עשרה)(?=\s|$|[.,])/);
+
+  if (textTimeMatch) {
+    let hourStr = textTimeMatch[2];
+    let hour = parseInt(hourStr);
+
+    // אם כתבו את השעה במילים ("ארבע") במקום במספר ("4")
+    if (isNaN(hour)) {
+      const hebrewHours = {
+        "אחת": 1, "שתיים": 2, "שלוש": 3, "ארבע": 4, "חמש": 5,
+        "שש": 6, "שבע": 7, "שמונה": 8, "תשע": 9, "עשר": 10,
+        "אחת עשרה": 11, "שתים עשרה": 12
+      };
+      hour = hebrewHours[hourStr];
+    }
+
+    // הנחה למשימות: אם השעה בין 1 ל-7, הכוונה היא כנראה לאחר הצהריים
+    if (hour >= 1 && hour <= 7) {
+      hour += 12;
+    }
+
+    if (hour >= 0 && hour <= 23) {
+      return `${String(hour).padStart(2, "0")}:00`;
+    }
+  }
+
+  return "";
 }
 
 function detectDuration(segment) {
