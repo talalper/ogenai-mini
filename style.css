@@ -30,7 +30,7 @@ body {
    radial-gradient(circle at bottom left, rgba(184, 234, 216, 0.42), transparent 28rem),
    var(--bg);
  color: var(--text);
- font-family: Arial, "Helvetica Neue", sans-serif;
+ font-family: Tahoma, "Helvetica Neue", sans-serif;
 }
 
 button,
