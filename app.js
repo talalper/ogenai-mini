@@ -306,6 +306,7 @@ function renderDraftCard(draft) {
 function renderTasks() {
  const today = isoToday();
 
+ // 1. סינון המשימות לפי הטאב הנבחר (הקוד הקיים שלך)
  const visibleTasks = state.tasks.filter((task) => {
    if (state.activeTab === "today") {
      return task.executionDate <= today;
@@ -314,8 +315,22 @@ function renderTasks() {
    return task.executionDate > today;
  });
 
- const openCount = visibleTasks.filter((task) => task.status !== "completed").length;
- const doneCount = visibleTasks.filter((task) => task.status === "completed").length;
+ // 2. מילון ציונים לרמות הדחיפות (כדי שהמחשב יבין מי יותר חשוב)
+ const urgencyWeights = {
+   "גבוהה": 3,
+   "בינונית": 2,
+   "נמוכה": 1
+ };
+
+ // 3. מיון המשימות מהדחיפות הגבוהה לנמוכה
+ visibleTasks.sort((a, b) => {
+   const weightA = urgencyWeights[a.urgency] || 0;
+   const weightB = urgencyWeights[b.urgency] || 0;
+   return weightB - weightA; // מחזיר את הציון הגבוה להתחלה
+ });
+
+ // המשך הקוד הרגיל שלך...
+ const openCount = visibleTasks.filter((task) => task.status !== "completed").length; const doneCount = visibleTasks.filter((task) => task.status === "completed").length;
 
  elements.taskSummary.textContent =
    state.activeTab === "today"
