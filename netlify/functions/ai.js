@@ -91,9 +91,12 @@ export const handler = async (event) => {
 
     const today = isoToday();
     const defaultDueDate = addDaysIso(today, 7);
+    const dayOfWeek = getHebrewDayOfWeek(today); // 🆕 שורה חדשה שמחשבת את יום השבוע הנוכחי
+
     const prompt = buildPrompt({
       text,
       today,
+      dayOfWeek, // 🆕 מעבירים את יום השבוע לפרומפט
       defaultDueDate,
       existingTasks
     });
@@ -143,10 +146,15 @@ export const handler = async (event) => {
   }
 };
 
-function buildPrompt({ text, today, defaultDueDate, existingTasks }) {
-  // חישוב מראש של מחר ומחרתיים עבור הדוגמאות שנציג ל-AI
+function buildPrompt({ text, today, dayOfWeek, defaultDueDate, existingTasks }) {
   const tomorrow = addDaysIso(today, 1);
   const tomorrowDueDate = addDaysIso(tomorrow, 7);
+
+  // חישוב דינמי של יום חמישי הקרוב עבור הדוגמה של ה-AI
+  const currentDayIndex = new Date(`${today}T12:00:00`).getDay(); // 0 = ראשון, 2 = שלישי...
+  const daysToThursday = (4 - currentDayIndex + 7) % 7 || 7;
+  const upcomingThursdayIso = addDaysIso(today, daysToThursday);
+  const upcomingThursdayDueDateIso = addDaysIso(upcomingThursdayIso, 7);
 
   const existingTasksText = existingTasks.length
     ? existingTasks
@@ -171,8 +179,8 @@ function buildPrompt({ text, today, defaultDueDate, existingTasks }) {
 ${text}
 """
 
-תאריך היום:
-${today}
+תאריך היום הנוכחי קלנדרית:
+${today} (${dayOfWeek})
 
 תאריך יעד ברירת מחדל:
 ${defaultDueDate}
@@ -190,43 +198,33 @@ ${existingTasksText}
 3. אל תמציא משימות שלא מופיעות בטקסט.
 
 חוקי פיצול וזיהוי פעלים:
-4. חובה להפריד משימות מחוברות: אם מופיעה מילת חיבור (כמו "ו" החיבור, "וגם", "אז") לפני פעולה נוספת, או לפני שם עצם עצמאי שמייצג נושא חדש (למשל: "וגם דוח", "ותרופות"), חובה עליך ליצור משימות נפרדות לחלוטין! אל תבלע שמות עצם לתוך כותרת המשימה הקודמת.
+4. חובה להפריד משימות מחוברות: אם מופיעה מילת חיבור (כמו "ו" החיבור, "וגם", "אז") לפני פעולה נוספת, או לפני שם עצם עצמאי שמייצג נושא חדש, חובה עליך ליצור משימות נפרדות לחלוטין!
 5. זיהוי פעלים רחב: כל שם פועל בעברית מייצג משימה נפרדת.
 6. רק אם פעולה אחת כוללת כמה פריטים מאותו סוג, אל תפצל (למשל "לקנות חלב ולחם").
 
 חוקי שדות, תאריכים ושעות:
-7. זיהוי שעות חכם: אם מופיעה שעה בטקסט (גם במילים או כמספר בודד, כמו "ב 4", "בשעה ארבע", "שש וחצי", "בשש", "בשמונה"), חלץ אותה והמר אותה לפורמט HH:MM בשעון 24 שעות והכנס לשדה time. 
+7. זיהוי שעות חכם: אם מופיעה שעה בטקסט (גם במילים או כמספר בודד), חלץ אותה והמר אותה לפורמט HH:MM בשעון 24 שעות והכנס לשדה time. 
 8. אם השעה קטנה מ-8 (למשל "ב 4"), הנח שמדובר באחר הצהריים והחזר תמיד בפורמט עשרים וארבע שעות (למשל 16:00).
 9. category חייבת להיות אחת מהקטגוריות המותרות.
-10. זיהוי תאריכים יחסיים חכם: השתמש ב-"תאריך היום" שסופק (${today}) כעוגן זמן קלנדרי. אם המשתמשת מציינת מילים כמו "מחר", "מחרתיים", או יום ספציפי בשבוע, חשב את התאריך המדויק בפורמט YYYY-MM-DD והזן אותו בשדה executionDate.
-11. תחום השפעה של מילות זמן: במשפט מפוצל, מילת זמן כמו "מחר" משפיעה אך ורק על הפעולה שהיא צמודה אליה פיזית! אם לפעולות הבאות במשפט אין מילת זמן מפורשת משלהן, קבע עבורן את תאריך הביצוע כיום הנוכחי (${today}).
-12. מיפוי מילות דחיפות: אם מופיעה המילה "דחוף", "בהול", "מיד" או "עכשיו" בהקשר של משימה כלשהי (למשל: "לרופא דחוף" או "דחוף להתקשר"), קבע את השדה urgency כ-"גבוהה". אל תשאיר אותה כבינונית!
+10. זיהוי תאריכים יחסיים וימי שבוע (קריטי): השתמש בתאריך היום (${today}) וביום השבוע הנוכחי (${dayOfWeek}) כעוגן זמן מוחלט!
+    - אם מצוין יום ספציפי בשבוע (למשל "יום חמישי", "ביום שני"), חשב מתמטית מה יהיה התאריך של אותו היום הקרוב ביותר *החל מתאריך היום* והזן אותו בפורמט YYYY-MM-DD בשדה executionDate.
+11. תחום השפעה של מילות זמן: במשפט מפוצל, מילת זמן או יום בשבוע משפיעים אך ורק על הפעולה שהם צמודים אליה פיזית!
+12. מיפוי מילות דחיפות: אם מופיעה המילה "דחוף", "בהול", "מיד" או "עכשיו", קבע את השדה urgency כ-"גבוהה".
 
-חוק ניסוח אקטיבי (קריטי לשמות עצם):
-13. חובה שכל כותרת משימה (title) תתחיל בשם פועל אקטיבי (למשל: לכתוב, לקנות, לקחת). אם המשתמשת הזינה רק שם עצם או ביטוי קצר ללא פועל (למשל: "דוח" או "תרופות לנטע"), הבן את ההקשר הלוגי והוסף פועל מתאים בעצמך בתחילת הכותרת (למשל: "לכתוב דוח", "לקנות תרופות לנטע").
+חוק ניסוח אקטיבי:
+13. חובה שכל כותרת משימה (title) תתחיל בשם פועל אקטיבי. אם המשתמשת הזינה רק שם עצם (למשל: "דוח"), הבן את ההקשר והוסף פועל מתאים בעצמך (למשל: "לכתוב דוח").
 
 דוגמאות חובה ללמידה - פעל בדיוק כך:
 
-קלט: "לקנות בלונים ולעשות עוגה"
-פלט רצוי (שים לב לפיצול ו' החיבור):
+קלט: "להזמין בייביסיטר ליום חמישי"
+פלט רצוי (שים לב שיום חמישי מחושב במדויק יחסית לכך שהיום ${dayOfWeek} בתאריך ${today}):
 {
   "tasks": [
     {
-      "title": "לקנות בלונים",
-      "category": "קניות",
-      "executionDate": "${today}",
-      "dueDate": "${defaultDueDate}",
-      "time": "",
-      "durationMinutes": 60,
-      "urgency": "בינונית",
-      "notes": "",
-      "isDuplicate": false
-    },
-    {
-      "title": "לעשות עוגה",
-      "category": "בית",
-      "executionDate": "${today}",
-      "dueDate": "${defaultDueDate}",
+      "title": "להזמין בייביסיטר",
+      "category": "ילדים",
+      "executionDate": "${upcomingThursdayIso}",
+      "dueDate": "${upcomingThursdayDueDateIso}",
       "time": "",
       "durationMinutes": 60,
       "urgency": "בינונית",
@@ -237,7 +235,7 @@ ${existingTasksText}
 }
 
 קלט: "לקבוע תור מחר בשש וחצי לרופא דחוף ולאסוף את יהלי מהחוג בשמונה וגם דוח ותרופות לנטע"
-פלט רצוי (שים לב לחלוקה המושלמת של זמנים, שעות, דחיפות 'גבוהה' לרופא, ופיצול שמות עצם למשימות אקטיביות נפרדות בתאריך של היום):
+פלט רצוי:
 {
   "tasks": [
     {
@@ -246,7 +244,6 @@ ${existingTasksText}
       "executionDate": "${tomorrow}",
       "dueDate": "${tomorrowDueDate}",
       "time": "18:30",
-      "durationMinutes": 60,
       "urgency": "גבוהה",
       "notes": "",
       "isDuplicate": false
@@ -257,7 +254,6 @@ ${existingTasksText}
       "executionDate": "${today}",
       "dueDate": "${defaultDueDate}",
       "time": "20:00",
-      "durationMinutes": 60,
       "urgency": "בינונית",
       "notes": "",
       "isDuplicate": false
@@ -268,7 +264,6 @@ ${existingTasksText}
       "executionDate": "${today}",
       "dueDate": "${defaultDueDate}",
       "time": "",
-      "durationMinutes": 60,
       "urgency": "בינונית",
       "notes": "",
       "isDuplicate": false
@@ -279,36 +274,6 @@ ${existingTasksText}
       "executionDate": "${today}",
       "dueDate": "${defaultDueDate}",
       "time": "",
-      "durationMinutes": 60,
-      "urgency": "בינונית",
-      "notes": "",
-      "isDuplicate": false
-    }
-  ]
-}
-
-קלט: "כביסה וקניות בסופר"
-פלט רצוי:
-{
-  "tasks": [
-    {
-      "title": "לעשות כביסה",
-      "category": "בית",
-      "executionDate": "${today}",
-      "dueDate": "${defaultDueDate}",
-      "time": "",
-      "durationMinutes": 60,
-      "urgency": "בינונית",
-      "notes": "",
-      "isDuplicate": false
-    },
-    {
-      "title": "לקנות קניות בסופר",
-      "category": "קניות",
-      "executionDate": "${today}",
-      "dueDate": "${defaultDueDate}",
-      "time": "",
-      "durationMinutes": 60,
       "urgency": "בינונית",
       "notes": "",
       "isDuplicate": false
@@ -574,4 +539,10 @@ function jsonResponse(statusCode, body) {
     headers: CORS_HEADERS,
     body: JSON.stringify(body)
   };
+}
+
+function getHebrewDayOfWeek(isoDate) {
+  const date = new Date(`${isoDate}T12:00:00`);
+  const days = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת"];
+  return days[date.getDay()];
 }
