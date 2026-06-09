@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Assistant:wght@400;700;800&family=Fredoka:wght@300..700&family=Gveret+Levin&family=Heebo:wght@400;700;900&family=Playpen+Sans:wght@400;700&family=Rubik:wght@400;700;900&family=Secular+One&family=Suez+One&family=Varela+Round&family=Unbounded:wght@900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Assistant:wght@400;700;800&family=Fredoka:wght@300..700&family=Gveret+Levin&family=Heebo:wght@400;700;900&family=Playpen+Sans:wght@300..800&family=Rubik:wght@400;700;900&family=Secular+One&family=Solitreo&family=Suez+One&family=Varela+Round&family=Unbounded:wght@900&family=Caveat:wght@400..700&family=Dancing+Script:wght@400..700&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
 :root {
  --bg: #fbf4df;
  --panel: rgba(255, 252, 241, 0.92);
@@ -90,21 +90,43 @@ h2 {
  margin: 0;
 }
 
- h1 {
- font-family: 'Suez One', serif; /* מעבר לפונט Suez One */
- font-size: clamp(2.3rem, 6.5vw, 4.2rem); /* התאמת גודל קלה לפונט הזה */
- line-height: 0.95;
+ /* h1 {
+ /* font-family: 'Suez One', serif; /* מעבר לפונט Suez One */
+ /*font-size: clamp(2.3rem, 6.5vw, 4.2rem); /* התאמת גודל קלה לפונט הזה */
+ /*line-height: 0.95; */
+ /* --- עיצוב הלוגו החדש: Ogen (Caveat) + AI (Source Serif 4) --- */
+/* --- תיקון הלוגו: כיוון נכון משמאל לימין ואותיות מדויקות --- */
+/* --- עדכון הלוגו: Ogen (Dancing Script) + AI (Source Serif 4) --- */
+h1, h1 span, .header h1, .logo h1 {
+  font-size: clamp(2.8rem, 7.5vw, 4.8rem) !important;
+  line-height: 0.95 !important;
+  display: inline-block !important;
+  direction: ltr !important; /* שומר על הסדר הנכון משמאל לימין */
+  text-transform: none !important;
 }
 
-/* כאן מבוצע השינוי עבור הכותרות שלך! */
+/* החלק של Ogen עם פונט Dancing Script הזורם והאלגנטי */
+/* החלק של Ogen (פונט Dancing Script עם בולד מוגבר) */
+h1 span.logo-main {
+  font-family: 'Dancing Script', cursive !important;
+  font-weight: 700 !important; /* המשקל הכי עבה של הפונט */
+  text-shadow: 0.8px 0 0 currentcolor, -0.8px 0 0 currentcolor; /* 🔥 הטריק שמוסיף לו עוד טיפה בולד ועובי לקווים */
+  color: var(--text) !important;
+}
+
+/* החלק של AI נשאר יציב וסריפי */
+h1 span.logo-accent {
+  font-family: 'Source Serif 4', serif !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+
+ /* שינוי הפונט לכותרות "מה על הפרק" ו"המשימות שלי" */
 h2 {
- font-family: 'Amatic SC', sans-serif;
- font-size: clamp(2.5rem, 6vw, 3.8rem); /* הגדלנו אותו עוד קצת כדי שיקבל נוכחות */
- font-weight: 700; /* הבולד המקסימלי */
- letter-spacing: 0.04em;
- 
- /* הטריק לעיבוי אותיות: יוצר שכבה כפולה ועדינה שמעבה את הפונט */
- text-shadow: 0.5px 0 0 var(--text), -0.5px 0 0 var(--text);
+  font-family: 'Secular One', sans-serif;
+  font-size: clamp(1.8rem, 4.5vw, 2.4rem); /* הגדלנו טיפה ממש את הגודל המינימלי והמקסימלי */
+  text-shadow: 0.3px 0 0 currentcolor, -0.3px 0 0 currentcolor; /* טריק CSS שמוסיף לו עוד קצת עובי ובולד מבלי לעוות את הפונט */
+  letter-spacing: 0.01em;
 }
 
 .subtitle {
@@ -543,3 +565,11 @@ select:focus {
 .badge[class*="family"]::before, .badge[data-category*="family"]::before { content: "👨‍👩‍👧‍👦 "; }
 .badge[class*="finance"]::before, .badge[data-category*="finance"]::before { content: "💰 "; }
 .badge[class*="other"]::before, .badge[data-category*="other"]::before { content: "📌 "; }
+
+/* שינוי הפונט והמראה של טקסט הדוגמה בתוך תיבת הטקסט */
+textarea::placeholder {
+  font-family: 'Tahoma', sans-serif; /* 🔥 חזרנו לטאחומה הנקי והיציב */
+  font-size: 0.85rem; /* הגודל המוקטן והמעודן שביקשת קודם */
+  color: #a09589;
+  opacity: 0.75; /* שומר על השקיפות העדינה שלא יפריע בעין */
+}
