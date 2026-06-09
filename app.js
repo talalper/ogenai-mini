@@ -341,7 +341,6 @@ function renderTasks() {
 function renderSavedTaskCard(task) {
  const completed = task.status === "completed";
  const categoryClass = completed ? "green" : "";
- 
  const urgencyClass = task.urgency === "גבוהה" ? "high-urgency" : ""; 
 
  return `
@@ -355,9 +354,10 @@ function renderSavedTaskCard(task) {
      />
 
      <div>
-       <div class="card-title ${urgencyClass}">${escapeHtml(task.title)}</div>
+       <div class="card-title">${escapeHtml(task.title)}</div>
+       
        <div class="meta-line">
-         ${escapeHtml(task.category)} • דחיפות ${escapeHtml(task.urgency)} • ${escapeHtml(task.durationMinutes)} דק׳
+         ${escapeHtml(task.category)} • <span class="${urgencyClass}">דחיפות ${escapeHtml(task.urgency)}</span> • ${escapeHtml(task.durationMinutes)} דק׳
          ${task.time ? ` • ${escapeHtml(task.time)}` : ""}
        </div>
        <div class="badges">
