@@ -5,6 +5,18 @@ const STORAGE_KEY = "ogenai-mini-mvp-tasks-v1";
 const categories = ["בית", "ילדים", "עבודה", "קניות", "בריאות", "משפחה", "כספים", "אחר"];
 const urgencies = ["נמוכה", "בינונית", "גבוהה"];
 
+// 🆕 מילון אימוג'ים חכם לקטגוריות השונות (תומך גם בשמות נקיים וגם בשמות עם אימוג'י קודם)
+const categoryIcons = {
+  "בית": "🏠", "🏠 בית": "🏠",
+  "ילדים": "👧👦", "👧👦 ילדים": "👧👦",
+  "עבודה": "💻", "💻 עבודה": "💻",
+  "קניות": "🛒", "🛒 קניות": "🛒",
+  "בריאות": "🏥", "🏥 בריאות": "🏥",
+  "משפחה": "👨‍👩‍👧‍👦", "👨‍👩‍👧‍👦 משפחה": "👨‍👩‍👧‍👦",
+  "כספים": "💰", "💰 כספים": "💰",
+  "אחר": "📌", "📌 אחר": "📌"
+};
+
 const elements = {
  input: document.querySelector("#brainDumpInput"),
  charCounter: document.querySelector("#charCounter"),
@@ -306,7 +318,6 @@ function renderDraftCard(draft) {
 function renderTasks() {
  const today = isoToday();
 
- // 1. סינון המשימות לפי הטאב הנבחר (הקוד הקיים שלך)
  const visibleTasks = state.tasks.filter((task) => {
    if (state.activeTab === "today") {
      return task.executionDate <= today;
@@ -315,22 +326,20 @@ function renderTasks() {
    return task.executionDate > today;
  });
 
- // 2. מילון ציונים לרמות הדחיפות (כדי שהמחשב יבין מי יותר חשוב)
  const urgencyWeights = {
    "גבוהה": 3,
    "בינונית": 2,
    "נמוכה": 1
  };
 
- // 3. מיון המשימות מהדחיפות הגבוהה לנמוכה
  visibleTasks.sort((a, b) => {
    const weightA = urgencyWeights[a.urgency] || 0;
    const weightB = urgencyWeights[b.urgency] || 0;
-   return weightB - weightA; // מחזיר את הציון הגבוה להתחלה
+   return weightB - weightA; 
  });
 
- // המשך הקוד הרגיל שלך...
- const openCount = visibleTasks.filter((task) => task.status !== "completed").length; const doneCount = visibleTasks.filter((task) => task.status === "completed").length;
+ const openCount = visibleTasks.filter((task) => task.status !== "completed").length; 
+ const doneCount = visibleTasks.filter((task) => task.status === "completed").length;
 
  elements.taskSummary.textContent =
    state.activeTab === "today"
@@ -358,6 +367,11 @@ function renderSavedTaskCard(task) {
  const categoryClass = completed ? "green" : "";
  const urgencyClass = task.urgency === "גבוהה" ? "high-urgency" : ""; 
 
+ // 🆕 שולף את האימוג'י המתאים למשימה המאושרת מהמילון החדש
+ const icon = categoryIcons[task.category] || "📌";
+ // מנקה את שם הקטגוריה אם במקרה הגיע כבר עם אימוג'י מהבקהאנד
+ const cleanCategoryName = task.category.replace(/[\u2300-\u23fa\u2600-\u27bf\ud83c-\ud83e][\ud000-\udfff]?\s*/g, "");
+
  return `
    <article class="card task-view-card ${completed ? "completed" : ""}">
      <input
@@ -372,7 +386,7 @@ function renderSavedTaskCard(task) {
        <div class="card-title">${escapeHtml(task.title)}</div>
        
        <div class="meta-line">
-         ${escapeHtml(task.category)} • <span class="${urgencyClass}">דחיפות ${escapeHtml(task.urgency)}</span> • ${escapeHtml(task.durationMinutes)} דק׳
+         <span>${icon} ${escapeHtml(cleanCategoryName)}</span> • <span class="${urgencyClass}">דחיפות ${escapeHtml(task.urgency)}</span> • ${escapeHtml(task.durationMinutes)} דק׳
          ${task.time ? ` • ${escapeHtml(task.time)}` : ""}
        </div>
        <div class="badges">
@@ -388,7 +402,14 @@ function renderSavedTaskCard(task) {
 }
 
 function option(value, selectedValue) {
- return `<option value="${escapeAttribute(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(value)}</option>`;
+ // שולף את האימוג'י המתאים מתוך המילון הקיים בתחילת הקובץ
+ const icon = categoryIcons[value] || "";
+ 
+ return `
+   <option value="${escapeAttribute(value)}" ${value === selectedValue ? "selected" : ""}>
+     ${icon} ${escapeHtml(value)}
+   </option>
+ `;
 }
 
 function showStatus(message, type = "success") {

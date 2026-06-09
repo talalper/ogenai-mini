@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Assistant:wght@400;700;800&family=Fredoka:wght@300..700&family=Gveret+Levin&family=Heebo:wght@400;700;900&family=Playpen+Sans:wght@400;700&family=Rubik:wght@400;700;900&family=Secular+One&family=Suez+One&family=Varela+Round&family=Unbounded:wght@900&display=swap');
 :root {
  --bg: #fbf4df;
  --panel: rgba(255, 252, 241, 0.92);
@@ -89,13 +90,21 @@ h2 {
  margin: 0;
 }
 
-h1 {
- font-size: clamp(2.1rem, 6vw, 4.2rem);
+ h1 {
+ font-family: 'Suez One', serif; /* מעבר לפונט Suez One */
+ font-size: clamp(2.3rem, 6.5vw, 4.2rem); /* התאמת גודל קלה לפונט הזה */
  line-height: 0.95;
 }
 
+/* כאן מבוצע השינוי עבור הכותרות שלך! */
 h2 {
- font-size: clamp(1.3rem, 3vw, 2rem);
+ font-family: 'Amatic SC', sans-serif;
+ font-size: clamp(2.5rem, 6vw, 3.8rem); /* הגדלנו אותו עוד קצת כדי שיקבל נוכחות */
+ font-weight: 700; /* הבולד המקסימלי */
+ letter-spacing: 0.04em;
+ 
+ /* הטריק לעיבוי אותיות: יוצר שכבה כפולה ועדינה שמעבה את הפונט */
+ text-shadow: 0.5px 0 0 var(--text), -0.5px 0 0 var(--text);
 }
 
 .subtitle {
@@ -473,3 +482,64 @@ select:focus {
    width: 100%;
  }
 }
+/* --- עיצוב מחדש לאייקונים של הכותרות (טיפה יותר גדולים ומיושרים) --- */
+.header-icon {
+  margin-right: 10px; /* רווח קל משמאל למילה */
+  margin-left: 0;
+  font-size: 0.8em; /* גודל ביניים מושלם - בולט אך פרופורציונלי */
+  display: inline-block;
+  font-family: sans-serif;
+  vertical-align: middle;
+}
+
+/* --- הזרקת אייקונים לקטגוריות לפי הטקסט הקיים בפועל --- */
+
+/* 🏠 בית */
+.badge:has(text:contains("בית"))::before,
+.badge[class*="בית"]::before,
+.badge[data-category*="בית"]::before { content: "🏠 "; }
+
+/* 👧👦 ילדים */
+.badge:has(text:contains("ילדים"))::before,
+.badge[class*="ילדים"]::before,
+.badge[data-category*="ילדים"]::before { content: "👧👦 "; }
+
+/* 💻 עבודה */
+.badge:has(text:contains("עבודה"))::before,
+.badge[class*="עבודה"]::before,
+.badge[data-category*="עבודה"]::before { content: "💻 "; }
+
+/* 🛒 קניות */
+.badge:has(text:contains("קניות"))::before,
+.badge[class*="קניות"]::before,
+.badge[data-category*="קניות"]::before { content: "🛒 "; }
+
+/* 🏥 בריאות */
+.badge:has(text:contains("בריאות"))::before,
+.badge[class*="בריאות"]::before,
+.badge[data-category*="בריאות"]::before { content: "🏥 "; }
+
+/* 👨‍👩‍👧‍👦 משפחה */
+.badge:has(text:contains("משפחה"))::before,
+.badge[class*="משפחה"]::before,
+.badge[data-category*="משפחה"]::before { content: "👨‍👩‍👧‍👦 "; }
+
+/* 💰 כספים */
+.badge:has(text:contains("כספים"))::before,
+.badge[class*="כספים"]::before,
+.badge[data-category*="כספים"]::before { content: "💰 "; }
+
+/* 📌 אחר */
+.badge:has(text:contains("אחר"))::before,
+.badge[class*="אחר"]::before,
+.badge[data-category*="אחר"]::before { content: "📌 "; }
+
+/* גיבוי במידה והבקהאנד משתמש בשמות באנגלית */
+.badge[class*="home"]::before, .badge[data-category*="home"]::before { content: "🏠 "; }
+.badge[class*="children"]::before, .badge[data-category*="children"]::before { content: "👧👦 "; }
+.badge[class*="work"]::before, .badge[data-category*="work"]::before { content: "💻 "; }
+.badge[class*="shopping"]::before, .badge[data-category*="shopping"]::before { content: "🛒 "; }
+.badge[class*="health"]::before, .badge[data-category*="health"]::before { content: "🏥 "; }
+.badge[class*="family"]::before, .badge[data-category*="family"]::before { content: "👨‍👩‍👧‍👦 "; }
+.badge[class*="finance"]::before, .badge[data-category*="finance"]::before { content: "💰 "; }
+.badge[class*="other"]::before, .badge[data-category*="other"]::before { content: "📌 "; }
