@@ -36,7 +36,8 @@ const elements = {
 const state = {
  drafts: [],
  tasks: loadTasks(),
- activeTab: "today"
+ activeTab: "today",
+ editingTaskId: null
 };
 
 init();
@@ -57,6 +58,8 @@ function init() {
 
  elements.taskList.addEventListener("click", handleSavedTaskClick);
  elements.taskList.addEventListener("change", handleSavedTaskChange);
+
+ elements.taskList.addEventListener("click", handleTaskEditActions);
 
  updateCharCounter();
  renderAll();
@@ -226,6 +229,65 @@ function handleSavedTaskClick(event) {
  showStatus("המשימה נמחקה.", "success");
 }
 
+// 🆕 --- פונקציות עריכת משימה קיימת ---
+
+function handleTaskEditActions(event) {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+
+  const card = button.closest("[data-task-id]");
+  if (!card) return;
+
+  const taskId = card.dataset.taskId;
+  const action = button.dataset.action;
+
+  // לחיצה על כפתור העיפרון כדי להיכנס למצב עריכה
+  if (action === "edit-task") {
+    state.editingTaskId = taskId;
+    renderTasks();
+  }
+
+  // לחיצה על ביטול בטופס העריכה
+  if (action === "cancel-edit") {
+    state.editingTaskId = null;
+    renderTasks();
+  }
+
+  // לחיצה על שמירה בטופס העריכה
+  if (action === "save-edit") {
+    const task = state.tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    // אוסף את הנתונים החדשים מהטופס
+    const newTitle = card.querySelector('[data-edit-field="title"]').value;
+    const newCategory = card.querySelector('[data-edit-field="category"]').value;
+    const newUrgency = card.querySelector('[data-edit-field="urgency"]').value;
+    const newExecutionDate = card.querySelector('[data-edit-field="executionDate"]').value;
+    const newDueDate = card.querySelector('[data-edit-field="dueDate"]').value;
+    const newTime = card.querySelector('[data-edit-field="time"]').value;
+    const newDuration = card.querySelector('[data-edit-field="durationMinutes"]').value;
+
+    if (cleanText(newTitle).length === 0) {
+      showStatus("המשימה חייבת לכלול תיאור", "error");
+      return;
+    }
+
+    // מעדכן את האובייקט
+    task.title = cleanText(newTitle);
+    task.category = newCategory;
+    task.urgency = newUrgency;
+    task.executionDate = newExecutionDate || isoToday();
+    task.dueDate = newDueDate || isoToday();
+    task.time = newTime;
+    task.durationMinutes = normalizeDuration(newDuration);
+    
+    state.editingTaskId = null; // יוצא ממצב עריכה
+    saveTasks();
+    renderTasks();
+    showStatus("המשימה עודכנה בהצלחה.", "success");
+  }
+}
+
 function setActiveTab(tab) {
  state.activeTab = tab;
  elements.todayTab.classList.toggle("active", tab === "today");
@@ -327,24 +389,51 @@ function renderTasks() {
  });
 
  const urgencyWeights = {
-   "גבוהה": 3,
-   "בינונית": 2,
-   "נמוכה": 1
- };
+    "גבוהה": 3,
+    "בינונית": 2,
+    "נמוכה": 1
+  };
 
- visibleTasks.sort((a, b) => {
-   const weightA = urgencyWeights[a.urgency] || 0;
-   const weightB = urgencyWeights[b.urgency] || 0;
-   return weightB - weightA; 
- });
+  visibleTasks.sort((a, b) => {
+    // 1. סטטוס ביצוע: משימות שבוצעו יורדות לתחתית
+    const aCompleted = a.status === "completed";
+    const bCompleted = b.status === "completed";
+
+    if (aCompleted && !bCompleted) return 1;
+    if (!aCompleted && bCompleted) return -1;
+
+    // 2. דחיפות: משימות דחופות יותר עולות למעלה
+    const weightA = urgencyWeights[a.urgency] || 0;
+    const weightB = urgencyWeights[b.urgency] || 0;
+    
+    if (weightA !== weightB) {
+      return weightB - weightA;
+    }
+
+    // 3. שובר שוויון - שעה: אם הדחיפות זהה, נמיין לפי שעת הביצוע
+    const timeA = a.time || "";
+    const timeB = b.time || "";
+
+    // אם למשימה א' יש שעה ולמשימה ב' אין - א' תקדים
+    if (timeA && !timeB) return -1;
+    // אם למשימה ב' יש שעה ולמשימה א' אין - ב' תקדים
+    if (!timeA && timeB) return 1;
+    
+    // אם לשתיהן יש שעה, נסדר אותן כרונולוגית מהבוקר לערב
+    if (timeA && timeB) {
+      return timeA.localeCompare(timeB);
+    }
+
+    return 0; // אם לשתיהן אין שעה מוגדרת, הן יישארו באותו סדר
+  });
 
  const openCount = visibleTasks.filter((task) => task.status !== "completed").length; 
  const doneCount = visibleTasks.filter((task) => task.status === "completed").length;
 
- elements.taskSummary.textContent =
-   state.activeTab === "today"
-     ? `להיום: ${visibleTasks.length} משימות • פתוחות: ${openCount} • בוצעו: ${doneCount}`
-     : `עתידיות: ${visibleTasks.length} משימות`;
+ elements.taskSummary.innerHTML =
+  state.activeTab === "today"
+    ? `<span>להיום: ${visibleTasks.length} משימות</span> <span class="dot">•</span> <span>פתוחות: ${openCount}</span> <span class="dot">•</span> <span>בוצעו: ${doneCount}</span>`
+    : `<span>עתידיות: ${visibleTasks.length} משימות</span>`;
 
  if (!visibleTasks.length) {
    elements.taskList.innerHTML = `
@@ -363,42 +452,111 @@ function renderTasks() {
 }
 
 function renderSavedTaskCard(task) {
- const completed = task.status === "completed";
- const categoryClass = completed ? "green" : "";
- const urgencyClass = task.urgency === "גבוהה" ? "high-urgency" : ""; 
+  // 🆕 אם המשימה הזו נמצאת כרגע במצב עריכה, נרנדר את תבנית הטופס
+  if (state.editingTaskId === task.id) {
+    return renderEditTaskForm(task);
+  }
 
- // 🆕 שולף את האימוג'י המתאים למשימה המאושרת מהמילון החדש
- const icon = categoryIcons[task.category] || "📌";
- // מנקה את שם הקטגוריה אם במקרה הגיע כבר עם אימוג'י מהבקהאנד
- const cleanCategoryName = task.category.replace(/[\u2300-\u23fa\u2600-\u27bf\ud83c-\ud83e][\ud000-\udfff]?\s*/g, "");
+  const completed = task.status === "completed";
+  const categoryClass = completed ? "green" : "";
+  const urgencyClass = task.urgency === "גבוהה" ? "high-urgency" : ""; 
 
- return `
-   <article class="card task-view-card ${completed ? "completed" : ""}">
-     <input
-       class="task-checkbox"
-       type="checkbox"
-       data-complete-task="${escapeHtml(task.id)}"
-       ${completed ? "checked" : ""}
-       aria-label="סימון משימה כבוצעה"
-     />
+  const icon = categoryIcons[task.category] || "📌";
+  const cleanCategoryName = task.category.replace(/[\u2300-\u23fa\u2600-\u27bf\ud83c-\ud83e][\ud000-\udfff]?\s*/g, "");
 
-     <div>
-       <div class="card-title">${escapeHtml(task.title)}</div>
-       
-       <div class="meta-line">
-         <span>${icon} ${escapeHtml(cleanCategoryName)}</span> • <span class="${urgencyClass}">דחיפות ${escapeHtml(task.urgency)}</span> • ${escapeHtml(task.durationMinutes)} דק׳
-         ${task.time ? ` • ${escapeHtml(task.time)}` : ""}
-       </div>
-       <div class="badges">
-         <span class="badge ${categoryClass}">ביצוע: ${formatDate(task.executionDate)}</span>
-         <span class="badge">יעד: ${formatDate(task.dueDate)}</span>
-         ${task.isDuplicate ? `<span class="badge pink">ייתכן שכפול</span>` : ""}
-       </div>
-     </div>
+  return `
+    <article class="card task-view-card ${completed ? "completed" : ""}" data-task-id="${escapeHtml(task.id)}">
+      <input
+        class="task-checkbox"
+        type="checkbox"
+        data-complete-task="${escapeHtml(task.id)}"
+        ${completed ? "checked" : ""}
+        aria-label="סימון משימה כבוצעה"
+      />
 
-     <button class="icon-btn delete" type="button" data-delete-task="${escapeHtml(task.id)}" aria-label="מחיקת משימה">🗑</button>
-   </article>
- `;
+      <div>
+        <div>
+        <div class="card-title">${escapeHtml(task.title)}</div>
+        
+        <div class="task-details-chips">
+          ${task.time ? `<span class="info-chip">🕒 ${escapeHtml(task.time)}</span>` : ""}
+          <span class="info-chip">⏱ ${escapeHtml(task.durationMinutes)} דק׳</span>
+          <span class="info-chip ${urgencyClass}">דחיפות: ${escapeHtml(task.urgency)}</span>
+          <span class="info-chip">${icon} ${escapeHtml(cleanCategoryName)}</span>
+        </div>
+
+        <div class="task-details-chips" style="margin-top: 8px;">
+          <span class="info-chip date-chip ${categoryClass}">ביצוע: ${formatDate(task.executionDate)}</span>
+          <span class="info-chip date-chip">יעד: ${formatDate(task.dueDate)}</span>
+          ${task.isDuplicate ? `<span class="badge pink">ייתכן שכפול</span>` : ""}
+        </div>
+      </div>
+      </div>
+
+      <div class="card-actions-column">
+        <button class="icon-btn edit" type="button" data-action="edit-task" aria-label="עריכת משימה">✎</button>
+        <button class="icon-btn delete" type="button" data-delete-task="${escapeHtml(task.id)}" aria-label="מחיקת משימה">🗑</button>
+      </div>
+    </article>
+  `;
+}
+
+
+// 🆕 פונקציה חדשה שמייצרת את הטופס כשהכרטיס במצב עריכה
+function renderEditTaskForm(task) {
+  return `
+    <article class="card" data-task-id="${escapeHtml(task.id)}" style="border: 2px solid var(--purple);">
+      <div class="card-header">
+        <div class="card-title">עריכת משימה</div>
+      </div>
+
+      <div class="form-grid">
+        <label class="title-input">
+          משימה
+          <input data-edit-field="title" type="text" value="${escapeAttribute(task.title)}" />
+        </label>
+
+        <label>
+          קטגוריה
+          <select data-edit-field="category">
+            ${categories.map((c) => option(c, task.category)).join("")}
+          </select>
+        </label>
+
+        <label>
+          דחיפות
+          <select data-edit-field="urgency">
+            ${urgencies.map((u) => option(u, task.urgency)).join("")}
+          </select>
+        </label>
+
+        <label>
+          תאריך ביצוע
+          <input data-edit-field="executionDate" type="date" value="${escapeAttribute(task.executionDate)}" />
+        </label>
+
+        <label>
+          תאריך יעד
+          <input data-edit-field="dueDate" type="date" value="${escapeAttribute(task.dueDate)}" />
+        </label>
+
+        <label>
+          שעה
+          <input data-edit-field="time" type="time" value="${escapeAttribute(task.time)}" />
+        </label>
+
+        <label>
+          משך בדקות
+          <input data-edit-field="durationMinutes" type="number" min="10" max="300" step="5" value="${escapeAttribute(String(task.durationMinutes))}" />
+        </label>
+      </div>
+
+      <div class="input-footer" style="margin-top: 16px;">
+        <button class="ghost-btn" type="button" data-action="cancel-edit">ביטול</button>
+        <button class="primary-btn" type="button" data-action="save-edit">שמור שינויים</button>
+      </div>
+    </article>
+  `;
 }
 
 function option(value, selectedValue) {
@@ -491,7 +649,7 @@ function formatDate(isoDate) {
  return new Intl.DateTimeFormat("he-IL", {
    day: "2-digit",
    month: "2-digit",
-   year: "numeric"
+   year: "2-digit"
  }).format(new Date(`${isoDate}T12:00:00`));
 }
 

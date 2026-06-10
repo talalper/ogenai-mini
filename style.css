@@ -420,10 +420,21 @@ select:focus {
  color: var(--purple-dark);
 }
 
+/* --- סידור שורת הסיכום (משימות להיום / פתוחות / בוצעו) --- */
 .summary-line {
- color: var(--muted);
- font-weight: 800;
- margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap; /* שומר שהשורה לא תישבר בצורה מכוערת במסכים קטנים */
+  gap: 10px; /* 🔥 הסוד לרווח סימטרי ומושלם בין כל המשפטים והנקודות */
+  color: var(--muted);
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+/* עידון לנקודה המפרידה עצמה */
+.summary-line .dot {
+  color: #c4baa9; /* עושה את הנקודה טיפה יותר בהירה מהטקסט כדי שתשתלב ברכות */
+  font-size: 0.85rem;
 }
 
 .task-view-card {
@@ -581,4 +592,97 @@ textarea::placeholder {
   font-size: 0.85rem; /* הגודל המוקטן והמעודן שביקשת קודם */
   color: #a09589;
   opacity: 0.75; /* שומר על השקיפות העדינה שלא יפריע בעין */
+}
+/* --- עיצוב תגיות המידע האפורות בכרטיס המשימה --- */
+.task-details-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; /* רווח אחיד ויפה בין כל הנתונים */
+  margin-top: 10px;
+  align-items: center;
+}
+
+.info-chip {
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  font-size: 0.92rem;
+  font-weight: 600 !important;
+}
+
+.task-details-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.task-details-chips .info-chip + .info-chip:not(.date-chip)::before {
+  content: "•";
+  margin: 0 8px;
+  color: #c4baa9;
+  font-size: 0.9rem;
+}
+
+.info-chip {
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  font-size: 0.92rem;
+  font-weight: 600 !important;
+  display: inline;
+}
+
+.info-chip.green {
+  display: inline-flex;
+  align-items: center;
+  background: var(--yellow) !important;
+  color: #6b4b00 !important;
+  border: 1px solid rgba(111, 101, 91, 0.05);
+  padding: 6px 14px;
+  border-radius: 16px;
+}
+
+.info-chip.date-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #f3dea6;
+  color: #6b4b00;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.info-chip.high-urgency {
+  background: transparent !important;
+  color: var(--danger) !important;
+  border: 0 !important;
+  padding: 0;
+}
+
+/* סידור כפתורי העריכה והמחיקה בכרטיס משימה */
+.card-actions-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* --- עיצוב כפתור העריכה (עיפרון) מעודכן --- */
+.icon-btn.edit {
+  color: #9abed9; /* 🔥 כחול פסטלי, בהיר, רך ועדין מאוד */
+  font-size: 1.1rem; /* 🔥 הוקטן כדי להיות תואם בדיוק לגודל של אייקון הפח */
+  padding: 0; /* מאפס את הריווח כדי שקופסאות הכפתורים יהיו זהות ב-100% */
+}
+
+/* אפקט ריחוף רך ועדין לכפתור העריכה */
+.icon-btn.edit:hover {
+  background-color: #f4f8fb; /* רקע תכלכל כמעט שקוף */
+  border-color: #c9def0;
+  color: #7ba6c9; /* מתכהה ממש טיפה במעבר עכבר */
 }
