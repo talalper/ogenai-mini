@@ -641,8 +641,8 @@ textarea::placeholder {
 .info-chip.green {
   display: inline-flex;
   align-items: center;
-  background: var(--yellow) !important;
-  color: #6b4b00 !important;
+  background: var(--green);
+  color: var(--green-dark);
   border: 1px solid rgba(111, 101, 91, 0.05);
   padding: 6px 14px;
   border-radius: 16px;
@@ -651,7 +651,7 @@ textarea::placeholder {
 .info-chip.date-chip {
   display: inline-flex;
   align-items: center;
-  background: #f3dea6;
+  background:var(--yellow) !important;
   color: #6b4b00;
   padding: 8px 14px;
   border-radius: 999px;
